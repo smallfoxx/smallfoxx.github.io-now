@@ -5,12 +5,12 @@ title: 200111-Classes, Nested Modules, and Sharing Values
 
 As I've been working on a recent Module package, I've been separating out the module into nested module files. The main purpose was to keep the functions and commandlets organized based on their purpose or goals.  Eventually, I'd like to separate them out a bit more into interdependent, child modules similar to the Az module with Azure.
 
-```PowerShell
+```powershell
 # MyModule.psd1
 @{
-&nbsp;&nbsp;NestedModules = @( 'Alpha.psm1', 'Beta.psm1' )
-&nbsp;&nbsp;FunctionsToExport = 'Get-Alpha','Set-Alpha',
-&nbsp;&nbsp;&nbsp;&nbsp;'Get-Beta','Set-Beta'
+  NestedModules = @( 'Alpha.psm1', 'Beta.psm1' )
+  FunctionsToExport = 'Get-Alpha','Set-Alpha',
+    'Get-Beta','Set-Beta'
 }
 ```
 
@@ -77,7 +77,7 @@ None of these do exactly what I'm after either.
 
 Classes are useful because you can setup your own structure:
 
-```PowerShell
+```powershell
 Class cSharing {
     [string] $MyValue
 
@@ -97,7 +97,7 @@ If you've gotten through the fast pace remedial, now this is where we start usin
 
 Going back to Classes, if we make a Method we use commands to do whatever we want: (consider this all within a <code>class { }</code> definition)
 
-```PowerShell
+```powershell
 [string] GetData () {
     $FunVariable
 }
@@ -108,7 +108,7 @@ Going back to Classes, if we make a Method we use commands to do whatever we wan
 
 This is useful, but $FunVariable would just be scoped to within each Method and really no use.  With a class, we can reference our current instantiation of the class with the variable $this and reference its properties, even private ones:
 
-```PowerShell
+```powershell
 [private][string]$FunVariable
 [string] GetData () {
     $this.FunVariable
@@ -124,7 +124,7 @@ Now, consider the scope Script:.  This means any value within the script.  A fun
 
 If you move the variable outside of the class, it is now in the scope of the Script and you can reference it with $script:FunVariable .
 
-```PowerShell
+```powershell
 [string]$FunVariable
 Class cSharing {
     [string]$MyVariable
@@ -143,7 +143,7 @@ What's great, is because now that the $FunVariable is in the scope of the Classe
 
 As an example, if we make our Alpha.psm1 and Beta.psm1 nested modules look like this:
 
-```PowerShell
+```powershell
 $AlphaSettings = New-Object cSettings
 
 Function Get-Alpha {
@@ -163,7 +163,7 @@ Then do the same thing for Beta but replace '<code>Beta</code>' wherever you fin
 
 Now if we import that module (Import-Module MyModule), we can run a sequence of commands and see the values change through the different scopes:
 
-```PowerShell
+```powershell
 PS> Get-Alpha
         MyValue: 
         Shared: 
@@ -198,7 +198,7 @@ Enter our PowerShell cmdlet friend: Add-Member ScriptProperty.  Not really sure 
 
 But, since we can't do this within the definition of the class structure, we have to run Add-Member against each object as its constructed. Luckily, PowerShell classes do have a constructor method you can overload and is called whenever an object is created.
 
-```PowerShell
+```powershell
 [string]$FunVariable
 Class cSharing {
     [string]$MyVariable
@@ -210,7 +210,7 @@ Class cSharing {
 
 Now we just update our code to use the property Data instead of the methods GetData() and SetData().  In our example:
 
-```PowerShell
+```powershell
 Function Get-Alpha {
     Write-Host "`tMyValue: $($AlphaSettings.MyValue)"
     Write-Host "`tShared: $($AlphaSettings.Data)"
@@ -226,7 +226,7 @@ Function Set-Alpha {
 
 This looks much more familiar to PowerShell code and not quite so foreign.  Remove our module, re-import to get the update, and run our code to make sure it still works:
 
-```PowerShell
+```powershell
 PS> Get-Alpha
         MyValue: 
 ...
@@ -254,19 +254,19 @@ The final piece I need is getting access to the Class definition and its script 
 
 In PowerShell v5, the command <code>using</code> was introduced to allow the importing of a module to obtain access to its Classes.  So rather than exporting the class and making it public, we can just use using:
 
-```PowerShell
+```powershell
 using module "C:\Path\To\Modules\GlobalSettings\Class.psm1"
 ```
 
 This works fine as long as I know where the module path is.  However, that path can easily change depending on where  the module is installed, but we can fix that by using the $PSScriptRoot.
 
-```PowerShell
+```powershell
 using module "$PSScriptRoot\Class.psm1"
 ```
 
 That fails because <code>using</code> will not accept a variable in the path.  Now we have to get a little creative, but we can do this by turning the string into a script block and then use dot sourcing to process it.
 
-```PowerShell
+```powershell
 $useBlock = [ScriptBlock]::Create("using module '$PSScriptRoot\Classes.psm1'")
 . $useBlock
 ```
