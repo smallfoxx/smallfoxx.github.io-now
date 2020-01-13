@@ -47,8 +47,9 @@ My real goal that I wanted to have was this:
 
 ## <a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features ##
 
->I should probably go into each of these in more detail each, but I'll hopefully come back to them in later posts and just retcon this article.
->**A. Fool, last words**
+> I should probably go into each of these in more detail each, but I'll hopefully come back to them in later posts and just retcon this article.
+>
+> **A. Fool, last words**
 
 ### <a name="SharingData"></a>Sharing data ###
 
