@@ -9,7 +9,8 @@ name: SmallFoxx Tech Blog
 description: Another geek posting more crud about tech stuff
 
 # URL of your avatar or profile pic (you could use your GitHub profile pic)
-avatar: https://raw.githubusercontent.com/barryclark/jekyll-now/master/images/jekyll-logo.png
+avatar: https://avatars2.githubusercontent.com/u/38084959?s=400&u=c88387fcafe407691cfef636413b2456276b28e1&v=4
+# avatar: https://raw.githubusercontent.com/barryclark/jekyll-now/master/images/jekyll-logo.png
 
 #
 # Flags below are optional
