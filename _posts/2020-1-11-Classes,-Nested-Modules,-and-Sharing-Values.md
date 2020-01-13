@@ -1,9 +1,7 @@
 ---
 layout: post
-title: 200111-Classes, Nested Modules, and Sharing Values
+title: Classes, Nested Modules, and Sharing Values
 ---
-
-<!-- TOC -->
 
 - [Summary](#summary)
 - [Goals](#goals)
@@ -16,8 +14,6 @@ title: 200111-Classes, Nested Modules, and Sharing Values
   - [Coded Properties](#coded-properties)
   - [Using your Class](#using-your-class)
 - [Example Code](#example-code)
-
-<!-- /TOC -->
 
 ## Summary ##
 
