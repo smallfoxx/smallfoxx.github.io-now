@@ -3,6 +3,24 @@ layout: post
 title: 200111-Classes, Nested Modules, and Sharing Values
 ---
 
+<!-- TOC -->
+
+- [Summary](#summary)
+- [Goals](#goals)
+- [Gross oversimplification summary of PowerShell features](#gross-oversimplification-summary-of-powershell-features)
+  - [Sharing data](#sharing-data)
+    - [Scope](#scope)
+  - [Classes](#classes)
+- [Exploiting Scopes](#exploiting-scopes)
+  - [Basic implementation](#basic-implementation)
+  - [Coded Properties](#coded-properties)
+  - [Using your Class](#using-your-class)
+- [Example Code](#example-code)
+
+<!-- /TOC -->
+
+## Summary ##
+
 As I've been working on a recent Module package, I've been separating out the module into nested module files. The main purpose was to keep the functions and commandlets organized based on their purpose or goals.  Eventually, I'd like to separate them out a bit more into interdependent, child modules similar to the Az module with Azure.
 
 ```powershell
@@ -16,21 +34,7 @@ As I've been working on a recent Module package, I've been separating out the mo
 
 This means that the **MyModule** module has two file modules incorporated with it the two nested module **Alpha** and **Beta**.  This works great and no problems here.
 
-##### TOC (to skip to your part)  #####
-
-<!-- TOC -->autoauto- [MyModule.psd1](#mymodulepsd1)auto                - [TOC (to skip to your part)](#toc-to-skip-to-your-part)auto    - [<a name="Goals"></a>Goals](#a-namegoalsagoals)auto    - [<a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features](#a-nameoversimplifyagross-oversimplification-summary-of-powershell-features)auto        - [<a name="SharingData"></a>Sharing data](#a-namesharingdataasharing-data)auto            - [Scope](#scope)auto        - [<a name="Classes"></a>Classes](#a-nameclassesaclasses)auto    - [<a name="Exploiting"></a>Exploiting Scopes](#a-nameexploitingaexploiting-scopes)auto        - [<a name="Basic"></a>Basic implementation](#a-namebasicabasic-implementation)auto        - [<a name="CodedProperties"></a>Coded Properties](#a-namecodedpropertiesacoded-properties)auto        - [<a name="UsingClass"></a>Using your Class](#a-nameusingclassausing-your-class)auto    - [<a name="ExampleCode"></a>Example Code](#a-nameexamplecodeaexample-code)autoauto<!-- /TOC -->
-- [<a name="Goals"></a>Goals](#goals)
-- [<a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features](#gross-oversimplification-summary-of-powershell-features)
-  - [<a name="SharingData"></a>Sharing data](#sharing-data)
-    - [Scope](#scope)
-  - [<a name="Classes"></a>Classes](#classes)
-- [<a name="Exploiting"></a>Exploiting Scopes](#exploiting-scopes)
-  - [<a name="Basic"></a>Basic implementation](#basic-implementation)
-  - [<a name="CodedProperties"></a>Coded Properties](#coded-properties)
-  - [<a name="UsingClass"></a>Using your Class](#using-your-class)
-- [<a name="ExampleCode"></a>Example Code](#example-code)
-
-## <a name="Goals"></a>Goals ##
+## Goals ##
 
 My real goal that I wanted to have was this:
 
@@ -41,22 +45,22 @@ My real goal that I wanted to have was this:
 - Ease of use between modules
 - Work within PowerShell framework
 
-## <a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features ##
+## Gross oversimplification summary of PowerShell features ##
 
 > I should probably go into each of these in more detail each, but I'll hopefully come back to them in later posts and just retcon this article.
 >
 > **-A. Fool, last words**
 
-### <a name="SharingData"></a>Sharing data ###
+### Sharing data ###
 
 However, assume that there is a value in Alpha that needs to be shared with Beta.  There are a few ways to deal with this.
 
 | **Method** | **Code** | **Pro** | **Con** |
 | --- | --- | --- | --- |
-| Global private variable | <code>New-Variable -Name &lt;name&gt; -Value &lt;value&gt; -Visibility Private -Scope Global</code> | Its privately available within your module | Its existence outside your module is visible with the proper call, even if value is hard to find |
-| Get-/Set- Functions | <code>Function Get-&lt;name&gt; { $script:&lt;name&gt; }Function Set-&lt;name&gt; {$script:&lt;name&gt; = $args[0] }</code> | Value manipulation totally controlled by calls | - Functions exposed outside module- Have to call them potentially every time a value is updated- Very taxing when dealing with external data sources |
-| Reference Object | <code>[ref]$&lt;name&gt;</code> | Gets dynamic content from single memory space | Have to constantly use .Value property and always use [ref] in type definition |
-| Custom class | <code>class MyClass {     $&lt;name&gt;     Function MyClass() { }}</code> | Consistent structure throughout usage | Values unique to each instantiation. |
+| Global private variable | ```New-Variable -Name &lt;name&gt; -Value &lt;value&gt; -Visibility Private -Scope Global``` | Its privately available within your module | Its existence outside your module is visible with the proper call, even if value is hard to find |
+| Get-/Set- Functions | ```Function Get-&lt;name&gt; { $script:&lt;name&gt; }Function Set-&lt;name&gt; {$script:&lt;name&gt; = $args[0] }``` | Value manipulation totally controlled by calls | - Functions exposed outside module- Have to call them potentially every time a value is updated- Very taxing when dealing with external data sources |
+| Reference Object | ```[ref]$&lt;name&gt;``` | Gets dynamic content from single memory space | Have to constantly use .Value property and always use [ref] in type definition |
+| Custom class | ```class MyClass {     $&lt;name&gt;     Function MyClass() { }}``` | Consistent structure throughout usage | Values unique to each instantiation. |
 
 With all that, Global Private variables or Get-/Set- functions would probably do most of it, but I still didn't like the potential exposure and implementation.  I had no real silver bullet, so I started tinkering around some.
 
@@ -73,7 +77,7 @@ For anyone not working with PowerShell before, there are really only 4 scopes:
 
 None of these do exactly what I'm after either.
 
-### <a name="Classes"></a>Classes ###
+### Classes ###
 
 Classes are useful because you can setup your own structure:
 
@@ -91,11 +95,11 @@ Classes really have two main parts: Properties and Methods.
 
 While I could create a variable then in both Alpha and Beta of the type cSharing, each would have its own unique .MyValue as each is just its own instantiation of the type of structure.  Also, would have to publish the class making it visibly externally, again, not really looking to do that in this case.  There are some classes I would want public, but internal settings isn't really one of them.
 
-## <a name="Exploiting"></a>Exploiting Scopes ##
+## Exploiting Scopes ##
 
 If you've gotten through the fast pace remedial, now this is where we start using scopes to our advantage.  Quite frankly, I stumbled on this.  It makes sense and I'm assuming someone has done this before, but I wanted to make sure it was shared. Its not an exploit of a vulnerability, just using the features provided to achieve our goals.
 
-Going back to Classes, if we make a Method we use commands to do whatever we want: (consider this all within a <code>class { }</code> definition)
+Going back to Classes, if we make a Method we use commands to do whatever we want: (consider this all within a ```class { }``` definition)
 
 ```powershell
 [string] GetData () {
@@ -137,9 +141,9 @@ Class cSharing {
 }
 ```
 
-What's great, is because now that the $FunVariable is in the scope of the Classes.psm1, no matter how many instances of <code>cSharing</code> you create they all reference the same <code>$script:FunVariable</code> object.
+What's great, is because now that the $FunVariable is in the scope of the Classes.psm1, no matter how many instances of ```cSharing``` you create they all reference the same ```$script:FunVariable``` object.
 
-### <a name="Basic"></a>Basic implementation ###
+### Basic implementation ###
 
 As an example, if we make our Alpha.psm1 and Beta.psm1 nested modules look like this:
 
@@ -159,7 +163,7 @@ Function Set-Alpha {
 }
 ```
 
-Then do the same thing for Beta but replace '<code>Beta</code>' wherever you find '<code>Alpha</code>'.
+Then do the same thing for Beta but replace '```Beta```' wherever you find '```Alpha```'.
 
 Now if we import that module (Import-Module MyModule), we can run a sequence of commands and see the values change through the different scopes:
 
@@ -190,7 +194,7 @@ This illustrates that the Shared value changes with each setting even across mod
 
 However, things are a little less than ideal.  Methods work for reading and setting values, and they're a little clunky.  Furthermore, the class still has to be exported across module.
 
-### <a name="CodedProperties"></a>Coded Properties ###
+### Coded Properties ###
 
 In many object oriented programs, classes can properties have code behind them for Get and Set routines.  However, PowerShell's class definition uses variables for properties and script blocks for methods; you can't do script blocks with properties.
 
@@ -248,11 +252,11 @@ PS> Get-Beta
 
 Perfect!
 
-### <a name="UsingClass"></a>Using your Class ###
+### Using your Class ###
 
 The final piece I need is getting access to the Class definition and its script without publishing the Class to everyone and their bug.  This shouldn't be consider a major security consideration as they can still open your PowerShell and figure out what its doing, but rather just a way to minimize accidental access and protect the user from themselves.
 
-In PowerShell v5, the command <code>using</code> was introduced to allow the importing of a module to obtain access to its Classes.  So rather than exporting the class and making it public, we can just use using:
+In PowerShell v5, the command ```using``` was introduced to allow the importing of a module to obtain access to its Classes.  So rather than exporting the class and making it public, we can just use using:
 
 ```powershell
 using module "C:\Path\To\Modules\GlobalSettings\Class.psm1"
@@ -264,7 +268,7 @@ This works fine as long as I know where the module path is.  However, that path 
 using module "$PSScriptRoot\Class.psm1"
 ```
 
-That fails because <code>using</code> will not accept a variable in the path.  Now we have to get a little creative, but we can do this by turning the string into a script block and then use dot sourcing to process it.
+That fails because ```using``` will not accept a variable in the path.  Now we have to get a little creative, but we can do this by turning the string into a script block and then use dot sourcing to process it.
 
 ```powershell
 $useBlock = [ScriptBlock]::Create("using module '$PSScriptRoot\Classes.psm1'")
@@ -275,7 +279,7 @@ Now the module loads the class from the Classes.psm1!
 
 This means that we're now sharing select object between modules without having to constantly pull and update the object every time we want to use it or make a change to it.  At the same time, we can coexist with unique properties among each iteration.
 
-## <a name="ExampleCode"></a>Example Code ##
+## Example Code ##
 
 Feel free to exam the example code I made around this and use it as you like.  Also, feel free to reach out with any ideas, or comments around this! Just keep it civil here on the interwebs.
 
