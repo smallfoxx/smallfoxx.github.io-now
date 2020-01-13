@@ -7,32 +7,30 @@ More to come
 
 As I've been working on a recent Module package, I've been separating out the module into nested module files. The main purpose was to keep the functions and commandlets organized based on their purpose or goals.  Eventually, I'd like to separate them out a bit more into interdependent, child modules similar to the Az module with Azure.
 
-<code></code><code>PowerShell
+```PowerShell
 # MyModule.psd1
 @{
 &nbsp;&nbsp;NestedModules = @( 'Alpha.psm1', 'Beta.psm1' )
 &nbsp;&nbsp;FunctionsToExport = 'Get-Alpha','Set-Alpha',
 &nbsp;&nbsp;&nbsp;&nbsp;'Get-Beta','Set-Beta'
 }
-</code><code></code>
+```
 
 This means that the **MyModule** module has two file modules incorporated with it the two nested module **Alpha** and **Beta**.  This works great and no problems here.
 
 ##### TOC (to skip to your part)  #####
 
 <!-- TOC -->autoauto- [MyModule.psd1](#mymodulepsd1)auto                - [TOC (to skip to your part)](#toc-to-skip-to-your-part)auto    - [<a name="Goals"></a>Goals](#a-namegoalsagoals)auto    - [<a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features](#a-nameoversimplifyagross-oversimplification-summary-of-powershell-features)auto        - [<a name="SharingData"></a>Sharing data](#a-namesharingdataasharing-data)auto            - [Scope](#scope)auto        - [<a name="Classes"></a>Classes](#a-nameclassesaclasses)auto    - [<a name="Exploiting"></a>Exploiting Scopes](#a-nameexploitingaexploiting-scopes)auto        - [<a name="Basic"></a>Basic implementation](#a-namebasicabasic-implementation)auto        - [<a name="CodedProperties"></a>Coded Properties](#a-namecodedpropertiesacoded-properties)auto        - [<a name="UsingClass"></a>Using your Class](#a-nameusingclassausing-your-class)auto    - [<a name="ExampleCode"></a>Example Code](#a-nameexamplecodeaexample-code)autoauto<!-- /TOC -->
-- [MyModule.psd1](#mymodulepsd1)
-        - [TOC (to skip to your part)](#toc-to-skip-to-your-part)
-  - [<a name="Goals"></a>Goals](#goals)
-  - [<a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features](#gross-oversimplification-summary-of-powershell-features)
-    - [<a name="SharingData"></a>Sharing data](#sharing-data)
-      - [Scope](#scope)
-    - [<a name="Classes"></a>Classes](#classes)
-  - [<a name="Exploiting"></a>Exploiting Scopes](#exploiting-scopes)
-    - [<a name="Basic"></a>Basic implementation](#basic-implementation)
-    - [<a name="CodedProperties"></a>Coded Properties](#coded-properties)
-    - [<a name="UsingClass"></a>Using your Class](#using-your-class)
-  - [<a name="ExampleCode"></a>Example Code](#example-code)
+- [<a name="Goals"></a>Goals](#goals)
+- [<a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features](#gross-oversimplification-summary-of-powershell-features)
+  - [<a name="SharingData"></a>Sharing data](#sharing-data)
+    - [Scope](#scope)
+  - [<a name="Classes"></a>Classes](#classes)
+- [<a name="Exploiting"></a>Exploiting Scopes](#exploiting-scopes)
+  - [<a name="Basic"></a>Basic implementation](#basic-implementation)
+  - [<a name="CodedProperties"></a>Coded Properties](#coded-properties)
+  - [<a name="UsingClass"></a>Using your Class](#using-your-class)
+- [<a name="ExampleCode"></a>Example Code](#example-code)
 
 ## <a name="Goals"></a>Goals ##
 
@@ -49,14 +47,14 @@ My real goal that I wanted to have was this:
 
 > I should probably go into each of these in more detail each, but I'll hopefully come back to them in later posts and just retcon this article.
 >
-> - **A. Fool, last words**
+> **-A. Fool, last words**
 
 ### <a name="SharingData"></a>Sharing data ###
 
 However, assume that there is a value in Alpha that needs to be shared with Beta.  There are a few ways to deal with this.
 
-| Method | Code | Pro | Con |
-| --- | --- | --- |
+| **Method** | **Code** | **Pro** | **Con** |
+| --- | --- | --- | --- |
 | Global private variable | <code>New-Variable -Name &lt;name&gt; -Value &lt;value&gt; -Visibility Private -Scope Global</code> | Its privately available within your module | Its existence outside your module is visible with the proper call, even if value is hard to find |
 | Get-/Set- Functions | <code>Function Get-&lt;name&gt; { $script:&lt;name&gt; }Function Set-&lt;name&gt; {$script:&lt;name&gt; = $args[0] }</code> | Value manipulation totally controlled by calls | - Functions exposed outside module- Have to call them potentially every time a value is updated- Very taxing when dealing with external data sources |
 | Reference Object | <code>[ref]$&lt;name&gt;</code> | Gets dynamic content from single memory space | Have to constantly use .Value property and always use [ref] in type definition |
@@ -68,7 +66,7 @@ With all that, Global Private variables or Get-/Set- functions would probably do
 
 For anyone not working with PowerShell before, there are really only 4 scopes:
 
-| Scope | Purpose |
+| **Scope** | **Purpose** |
 | --- | --- |
 | Global | available across all scopes |
 | Local | only available within your local scope (ie: function, script, session, etc.) |
@@ -81,7 +79,7 @@ None of these do exactly what I'm after either.
 
 Classes are useful because you can setup your own structure:
 
-<code></code><code>PowerShell
+```PowerShell
 Class cSharing {
     [string] $MyValue
 
@@ -89,7 +87,7 @@ Class cSharing {
     }
 
 }
-</code><code></code>
+```
 
 Classes really have two main parts: Properties and Methods. 
 
@@ -101,18 +99,18 @@ If you've gotten through the fast pace remedial, now this is where we start usin
 
 Going back to Classes, if we make a Method we use commands to do whatever we want: (consider this all within a <code>class { }</code> definition)
 
-<code></code><code>PowerShell
+```PowerShell
 [string] GetData () {
     $FunVariable
 }
 [void] SetData () {
     $FunVariable = $args[0]
 }
-</code><code></code>
+```
 
 This is useful, but $FunVariable would just be scoped to within each Method and really no use.  With a class, we can reference our current instantiation of the class with the variable $this and reference its properties, even private ones:
 
-<code></code><code>PowerShell
+```PowerShell
 [private][string]$FunVariable
 [string] GetData () {
     $this.FunVariable
@@ -120,7 +118,7 @@ This is useful, but $FunVariable would just be scoped to within each Method and 
 [void] SetData () {
     $this.FunVariable = $args[0]
 }
-</code><code></code>
+```
 
 This is helpful, but each instance of the class is going to have its own value of FunVariable.
 
@@ -128,7 +126,7 @@ Now, consider the scope Script:.  This means any value within the script.  A fun
 
 If you move the variable outside of the class, it is now in the scope of the Script and you can reference it with $script:FunVariable .
 
-<code></code><code>PowerShell
+```PowerShell
 [string]$FunVariable
 Class cSharing {
     [string]$MyVariable
@@ -139,7 +137,7 @@ Class cSharing {
         $script:FunVariable = $args[0]
     }
 }
-</code><code></code>
+```
 
 What's great, is because now that the $FunVariable is in the scope of the Classes.psm1, no matter how many instances of <code>cSharing</code> you create they all reference the same <code>$script:FunVariable</code> object.
 
@@ -147,7 +145,7 @@ What's great, is because now that the $FunVariable is in the scope of the Classe
 
 As an example, if we make our Alpha.psm1 and Beta.psm1 nested modules look like this:
 
-<code></code><code>PowerShell
+```PowerShell
 $AlphaSettings = New-Object cSettings
 
 Function Get-Alpha {
@@ -161,13 +159,13 @@ Function Set-Alpha {
     $AlphaSettings.SetData($Value)
     $AlphaSettings.MyValue = $Value
 }
-</code><code></code>
+```
 
 Then do the same thing for Beta but replace '<code>Beta</code>' wherever you find '<code>Alpha</code>'.
 
 Now if we import that module (Import-Module MyModule), we can run a sequence of commands and see the values change through the different scopes:
 
-<code></code><code>PowerShell
+```PowerShell
 PS> Get-Alpha
         MyValue: 
         Shared: 
@@ -188,7 +186,7 @@ PS> Get-Alpha
 PS> Get-Beta
         MyValue: Set in Beta
         Shared: Set in Beta
-</code><code></code>
+```
 
 This illustrates that the Shared value changes with each setting even across modules without global exposure or private filtering.
 
@@ -202,7 +200,7 @@ Enter our PowerShell cmdlet friend: Add-Member ScriptProperty.  Not really sure 
 
 But, since we can't do this within the definition of the class structure, we have to run Add-Member against each object as its constructed. Luckily, PowerShell classes do have a constructor method you can overload and is called whenever an object is created.
 
-<code></code><code>PowerShell
+```PowerShell
 [string]$FunVariable
 Class cSharing {
     [string]$MyVariable
@@ -210,11 +208,11 @@ Class cSharing {
         $this | Add-Member ScriptProperty Data { $script:FunVariable } { $script:FunVariable = $args[0]
     }
 }
-</code><code></code>
+```
 
 Now we just update our code to use the property Data instead of the methods GetData() and SetData().  In our example:
 
-<code></code><code>PowerShell
+```PowerShell
 Function Get-Alpha {
     Write-Host "`tMyValue: $($AlphaSettings.MyValue)"
     Write-Host "`tShared: $($AlphaSettings.Data)"
@@ -226,11 +224,11 @@ Function Set-Alpha {
     $AlphaSettings.Data = $Value
     $AlphaSettings.MyValue = $Value
 }
-</code><code></code>
+```
 
 This looks much more familiar to PowerShell code and not quite so foreign.  Remove our module, re-import to get the update, and run our code to make sure it still works:
 
-<code></code><code>PowerShell
+```PowerShell
 PS> Get-Alpha
         MyValue: 
 ...
@@ -248,7 +246,7 @@ PS> Get-Alpha
 PS> Get-Beta
         MyValue: Set in Beta
         Shared: Set in Beta
-</code><code></code>
+```
 
 Perfect!
 
@@ -258,22 +256,22 @@ The final piece I need is getting access to the Class definition and its script 
 
 In PowerShell v5, the command <code>using</code> was introduced to allow the importing of a module to obtain access to its Classes.  So rather than exporting the class and making it public, we can just use using:
 
-<code></code><code>PowerShell
+```PowerShell
 using module "C:\Path\To\Modules\GlobalSettings\Class.psm1"
-</code><code></code>
+```
 
 This works fine as long as I know where the module path is.  However, that path can easily change depending on where  the module is installed, but we can fix that by using the $PSScriptRoot.
 
-<code></code><code>PowerShell
+```PowerShell
 using module "$PSScriptRoot\Class.psm1"
-</code><code></code>
+```
 
 That fails because <code>using</code> will not accept a variable in the path.  Now we have to get a little creative, but we can do this by turning the string into a script block and then use dot sourcing to process it.
 
-<code></code><code>PowerShell
+```PowerShell
 $useBlock = [ScriptBlock]::Create("using module '$PSScriptRoot\Classes.psm1'")
 . $useBlock
-</code><code></code>
+```
 
 Now the module loads the class from the Classes.psm1!
 
