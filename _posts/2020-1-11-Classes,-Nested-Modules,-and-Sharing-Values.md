@@ -38,32 +38,42 @@ This means that the **MyModule** module has two file modules incorporated with i
 
 My real goal that I wanted to have was this:
 
-* Consistent value across all nested modules
-* Complete obfuscation outside of the module
-* Ability to control input and output of data flows
-* Black box visibility between modules
-* Ease of use between modules
-* Work within PowerShell framework
+- Consistent value across all nested modules
+- Complete obfuscation outside of the module
+- Ability to control input and output of data flows
+- Black box visibility between modules
+- Ease of use between modules
+- Work within PowerShell framework
 
 ## <a name="Oversimplify"></a>Gross oversimplification summary of PowerShell features ##
 
 > I should probably go into each of these in more detail each, but I'll hopefully come back to them in later posts and just retcon this article.
 >
-> **A. Fool, last words**
+> - **A. Fool, last words**
 
 ### <a name="SharingData"></a>Sharing data ###
 
 However, assume that there is a value in Alpha that needs to be shared with Beta.  There are a few ways to deal with this.
 
-<figure class="wp-block-table is-style-stripes"><table class="has-subtle-pale-pink-background-color has-background"><thead><tr><th>Method</th><th>Code</th><th>Pro</th><th>Con</th></tr></thead><tbody><tr><td>Global private variable</td><td><code>New-Variable -Name &lt;name&gt; -Value &lt;value&gt; -Visibility Private -Scope Global</code></td><td>Its privately available within your module</td><td>Its existence outside your module is visible with the proper call, even if value is hard to find</td></tr><tr><td>Get-/Set- Functions</td><td><code>Function Get-&lt;name&gt; { $script:&lt;name&gt; }Function Set-&lt;name&gt; {$script:&lt;name&gt; = $args[0] }</code></td><td>Value manipulation totally controlled by calls</td><td>- Functions exposed outside module- Have to call them potentially every time a value is updated- Very taxing when dealing with external data sources</td></tr><tr><td>Reference Object</td><td><code>[ref]$&lt;name&gt;</code></td><td>Gets dynamic content from single memory space</td><td>Have to constantly use .Value property and always use [ref] in type definition</td></tr><tr><td>Custom class</td><td><code>class MyClass {     $&lt;name&gt;     Function MyClass() { }}</code></td><td>Consistent structure throughout usage</td><td>Values unique to each instantiation.</td></tr></tbody></table></figure>
+| Method | Code | Pro | Con |
+| --- | --- | --- |
+| Global private variable | <code>New-Variable -Name &lt;name&gt; -Value &lt;value&gt; -Visibility Private -Scope Global</code> | Its privately available within your module | Its existence outside your module is visible with the proper call, even if value is hard to find |
+| Get-/Set- Functions | <code>Function Get-&lt;name&gt; { $script:&lt;name&gt; }Function Set-&lt;name&gt; {$script:&lt;name&gt; = $args[0] }</code> | Value manipulation totally controlled by calls | - Functions exposed outside module- Have to call them potentially every time a value is updated- Very taxing when dealing with external data sources |
+| Reference Object | <code>[ref]$&lt;name&gt;</code> | Gets dynamic content from single memory space | Have to constantly use .Value property and always use [ref] in type definition |
+| Custom class | <code>class MyClass {     $&lt;name&gt;     Function MyClass() { }}</code> | Consistent structure throughout usage | Values unique to each instantiation. |
 
 With all that, Global Private variables or Get-/Set- functions would probably do most of it, but I still didn't like the potential exposure and implementation.  I had no real silver bullet, so I started tinkering around some.
 
-#### Scope ###
+#### Scope ####
 
 For anyone not working with PowerShell before, there are really only 4 scopes:
 
-<figure class="wp-block-table is-style-stripes"><table class="has-subtle-pale-pink-background-color has-background"><thead><tr><th>Scope</th><th>Purpose</th></tr></thead><tbody><tr><td>Global</td><td>available across all scopes</td></tr><tr><td>Local</td><td>only available within your local scope (ie: function, script, session, etc.)</td></tr><tr><td>Script</td><td>available within your script(file)</td></tr><tr><td>Using</td><td>Referencing current scope when calling a script block or other area.</td></tr></tbody></table></figure>
+| Scope | Purpose |
+| --- | --- |
+| Global | available across all scopes |
+| Local | only available within your local scope (ie: function, script, session, etc.) |
+| Script | available within your script(file) |
+| Using | Referencing current scope when calling a script block or other area. |
 
 None of these do exactly what I'm after either.
 
@@ -275,8 +285,7 @@ Feel free to exam the example code I made around this and use it as you like.  A
 
 [GlobalSettings example module on GitHub](https://github.com/smallfoxx/Tools/tree/master/TestModule/GlobalSettings)
 
-
-* [GlobalSettings.psd1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/GlobalSettings.psd1)
-* [Alpha.psm1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/Alpha.psm1)
-* [Beta.psm1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/Beta.psm1)
-* [Classes.psm1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/Classes.psm1)
+- [GlobalSettings.psd1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/GlobalSettings.psd1)
+- [Alpha.psm1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/Alpha.psm1)
+- [Beta.psm1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/Beta.psm1)
+- [Classes.psm1](https://github.com/smallfoxx/Tools/raw/master/TestModule/GlobalSettings/Classes.psm1)
