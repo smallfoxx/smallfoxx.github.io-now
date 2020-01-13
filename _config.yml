@@ -32,7 +32,8 @@ footer-links:
   youtube: # channel/<your_long_string> or user/<user-name>
   googleplus: # anything in your profile username that comes after plus.google.com/
   reddit: SMFX
-  powershellgallery: https://www.powershellgallery.com/packages/TooManySecrets
+  powershellgallery: SMFX
+  powershellpackage: TooManySecrets
 
 
 # Enter your Disqus shortname (not your username) to enable commenting on posts
