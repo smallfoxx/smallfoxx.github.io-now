@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Restarting this blog
+title: 200105-Restarting this blog
 ---
 
 Well its apparently been too long since I tried doing this blogging thing, so I'm looking to get it restarted.  I'll be mostly posting about technology topics like [Azure](https://azure.microsoft.com"), [PowerShell](https://docs.microsoft.com/en-us/powershell/), Windows, Tablets, maybe even some drones or automation.  I try to avoid it, but I can't deny that there may be the occasional science post, maybe geek entertainment or gadget, and possibly even a libertarian posts, but those should be kept to a minimum.
